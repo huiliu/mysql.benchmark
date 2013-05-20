@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source ./settings
+
+set -x
+
+[ -d gnuplot ] || mkdir gnuplot
+
+for op in ro rw
+do
+    for thread in $THREADS
+    do
+        cat $1/sysbench.${op}.${thread}.res | awk -v s=$thread \
+            'BEGIN {i=5} /tps:/ { r=$5;rop=$7;tm=$12; if(i<1000) {r=$6;rop=$8;tm=$13};print s,i,r,rop,tm; i=i+5}'\
+            | tr -d ',ms' >> gnuplot/summary.sysbench.${op}.$1
+        echo >> gnuplot/summary.sysbench.${op}.$1
+
+        egrep 'sda' $1/iostat.${op}.${thread}.res >> gnuplot/summary.iostat.${op}.$1
+        echo >> gnuplot/summary.iostat.${op}.$1
+    done
+done
+
+set +x

@@ -1,0 +1,12 @@
+
+#settings
+SOCKET=/var/run/mysqld/mysqld.sock
+SYSBENCH=sysbench
+CPU_MASK="0,1"
+THREADS="1 2"
+CREATEDB=1
+TABLES=8
+TOTAL_ROWS=40000
+RUNTIME_RO=302
+RUNTIME_RW=602
+REPORT=5

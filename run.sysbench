@@ -9,21 +9,11 @@
 set -e
 set -u
 #set -x
-ulimit -n 10000
-
-#settings
-SOCKET=/tmp/mysqld.sock.sysbench
-SYSBENCH=sysbench
-CPU_MASK="0,1"
-THREADS="1 2 4"
-CREATEDB=1
-TABLES=8
-TOTAL_ROWS=400000
-RUNTIME_RO=302
-RUNTIME_RW=602
-REPORT=5
+#ulimit -n 10000
 
 #setup
+source ./settings
+
 ROWS=$(($TOTAL_ROWS / $TABLES))
 if [ "$CPU_MASK" != "" ]
 then
@@ -82,14 +72,14 @@ do
     if [ $RUNTIME_RO -gt 0 ]
     then
         $TASKSET iostat -mx $REPORT $(($RUNTIME_RO/$REPORT+1))  >> \
-                                                $OUTDIR/iostat.ro.$thread.res &
+                                                $OUTDIR/iostat.ro.${thread}.res &
 
         $TASKSET $SYSBENCH --test=lua/oltp.lua --oltp_tables_count=$TABLES \
                 --oltp-table-size=$ROWS --rand-seed=42 --rand-type=uniform \
                 --num-threads=$thread --oltp-read-only=on --report-interval=$REPORT\
                 --mysql-socket=$SOCKET --max-time=$RUNTIME_RO --max-requests=0 \
                 --mysql-user=root \
-                --percentile=99 run | tee -a $OUTDIR/sysbench.ro.$thread.res
+                --percentile=99 run | tee -a $OUTDIR/sysbench.ro.${thread}.res
 
         sleep 10
     fi
@@ -97,14 +87,14 @@ do
     if [ $RUNTIME_RW -gt 0 ]
     then
         $TASKSET iostat -mx $REPORT $(($RUNTIME_RW/$REPORT+1))  >> \
-                                                    $OUTDIR/iostat.rw.$thread.res &
+                                                $OUTDIR/iostat.rw.${thread}.res &
 
         $TASKSET $SYSBENCH --test=lua/oltp.lua --oltp_tables_count=$TABLES \
                 --oltp-table-size=$ROWS --rand-seed=42 --rand-type=uniform \
                 --num-threads=$thread --oltp-read-only=off --report-interval=$REPORT\
                 --mysql-socket=$SOCKET --max-time=$RUNTIME_RW --max-requests=0 \
                 --mysql-user=root \
-                --percentile=99 run | tee -a $OUTDIR/sysbench.rw.$thread.res
+                --percentile=99 run | tee -a $OUTDIR/sysbench.rw.${thread}.res
 
         sleep 10
     fi
